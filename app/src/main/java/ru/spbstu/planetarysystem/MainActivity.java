@@ -2,6 +2,7 @@ package ru.spbstu.planetarysystem;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
@@ -15,6 +16,13 @@ import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final double delayScaler = 1.2;
@@ -24,13 +32,26 @@ public class MainActivity extends AppCompatActivity {
     private KeplerRunner krunner;
     Toolbar toolbar;
     LinearLayout LL1;
-
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+
+        // Load the settings data from the JSON file
+        JSONObject settingsJson = loadJsonFromFile(this, "settings.json");
+        if (settingsJson != null) {
+            try {
+                String setting1Value = settingsJson.getString("setting1");
+                String setting2Value = settingsJson.getString("setting2");
+                // Apply the settings as needed
+            } catch (JSONException e) {
+                Log.e(TAG, "Error parsing JSON object", e);
+            }
+        }
         /* In the following we lay out the screen entirely in code (activity_main.xml
          * isn't used).  We wish to lay out a stage for planetary motion using LinearLayout.
          * The instance krunner of KeplerRunner is added to a LinearLayout LL1 using addView.
@@ -150,5 +171,21 @@ public class MainActivity extends AppCompatActivity {
         } else return super.onOptionsItemSelected(item);
         Log.w("MAIN ACTIVITY", "All if-elses are missed");
         return true;
+    }
+
+    private JSONObject loadJsonFromFile(Context context, String fileName) {
+        FileInputStream inputStream;
+        try {
+            inputStream = context.openFileInput(fileName);
+            int size = inputStream.available();
+            byte[] buffer = new byte[size];
+            inputStream.read(buffer);
+            inputStream.close();
+            String json = new String(buffer, StandardCharsets.UTF_8);
+            return new JSONObject(json);
+        } catch (IOException | JSONException e) {
+            Log.e(TAG, "Error loading JSON file", e);
+        }
+        return null;
     }
 }
