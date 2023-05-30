@@ -263,7 +263,142 @@ public class KeplerRunner extends View implements OnClickListener, OnLongClickLi
         if (delay < 10 && factor > 1) delay += 2;
         return delay;
     }
+    /* This method will be called each time the screen is redrawn. The draw is
+      on the Canvas object, with formatting controlled by the Paint object.
+      When to redraw is under Android control, but we can request a redraw
+      using the method invalidate() inherited from the View superclass.  In this
+      case the method handler() calls invalidate() when it receives a message from
+      the animation thread that it has completed one pass through the animation loop. */
 
+    @Override
+    public void onDraw(Canvas canvas) {
+
+        super.onDraw(canvas);
+
+               /* The equations we are solving for Kepler's laws define elliptical motion for a planet,
+            comet, or asteroid about the Sun at one focus of the ellipse.  But the objects in the
+            Solar System generally have different orientations for the long axis of the ellipse, so
+            to plot the correct relative orientation of different elliptical orbits on the same plot we
+            must rotate each solution by a specific amount (given in the array orientDeg[]).
+            This rotation can be implemented in one of two ways.  (1) We can define
+            our own 2-dimensional rotation matrix and use it to rotate the coordinates for
+            the instantaneous position of each planet, and the shape defining its orbit, before
+            plotting it.  (2) We can use the translate(dx, dy) and rotate(angle) methods of the
+            Canvas class to transform the canvas appropriately for each object before plotting it.
+            Both approaches are complicated by the fact that the origin of the computer graphics
+            coordinate system is at the upper left corner, but we are executing elliptical motion
+            about a point at the center of the screen, so these transformation involve both
+            translations and rotations.  In the following example we employ the 2nd approach and
+            use the rotate and translate methods of Canvas to rotate orbits. Notice also that
+            we are adopting the fiction that all bodies being considered have the same plane for
+            their ellipses.  Except for Pluto and Comet Halley, this is almost true for the objects
+            considered here.  Pluto's orbit is tilted about 17 degrees out of the plane of the ecliptic
+            (plane defined by the Earth's orbit), Halley's orbit by about 70 degrees, and Mercury's
+            orbit by 7 degrees.  All others are within several degrees of the ecliptic plane.  Thus,
+            the model in this example is an idealized but almost correct one where the realistic
+            elliptical orbits have been tilted when necessary to coincide with the ecliptic plane,
+            but their relative orientations within the ecliptic plane are approximately correct.
+            To treat the orbits more correctly we need 3D graphics.*/
+
+        // First draw the background (Sun and orbital paths)
+        drawBackground(paint, canvas);
+        paint.setColor(LABEL_COLOR);  // Label font color
+        paint.setTextSize(30);        // Label font size
+
+        // Now loop over the planets, asteroids, dwarf planets, and comets, placing the
+        // corresponding symbol at the appropriate position.
+
+        for (int i = 0; i < numObjects; i++) {
+
+            // The nested sets of save() .. restore() below keep the matrix transformations
+            // (translations and rotations in this case) from affecting the drawing on the canvas
+            // outside of the save() .. restore() blocks.  Note: for each save() there is
+            // a matching restore().
+
+            canvas.save();
+            canvas.translate(centerX, centerY);
+            canvas.rotate(orientDeg[i]);
+            canvas.translate(X[i] - centerX, Y[i] - centerY);
+            planet.draw(canvas);
+
+            // Rotate the canvas back before drawing label so it will be horizontal instead of
+            // having the orientation of the ellipse. This save() .. restore() block is nested inside
+            // the outer one, so this inverse rotation affects only the orientation of the label.
+
+            canvas.save();
+            canvas.rotate(-orientDeg[i]);
+            if (showLabels) canvas.drawText(planetName[i], 10, 0, paint);
+            canvas.restore();
+            canvas.restore();
+        }
+    }
+
+    // Called by onDraw to draw the background
+    private void drawBackground(Paint paint, Canvas canvas) {
+
+        // Draw the Sun
+        paint.setColor(SUN_COLOR);
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawCircle(centerX, centerY, sunRadius, paint);
+
+        // Orbits drawn with line segments if showOrbits is true
+        if (showOrbits) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setColor(ORBIT_COLOR);
+            double phi = 0;
+
+            // Loop over each object, drawing its orbit as a sequence of numpoints line segments
+            for (int i = 0; i < numObjects; i++) {
+
+                // Starting points to draw orbit.  Note that the sign of the y coordinate is flipped
+                float lastxx = 0;
+                float lastyy = -(float) (distanceFromFocus(c1[i], epsilon[i], phi) * Math.cos(phi));
+
+                canvas.save();
+                canvas.translate(centerX, centerY);
+                canvas.rotate(orientDeg[i]);
+                phi = 0;
+
+                // Increase density of plot points for very elliptical orbits to resolve their shapes
+                int plotpoints = numpoints;
+                double delphi = dphi;
+                if (epsilon[i] > 0.7) { // This can be done by another calculations
+                    plotpoints *= 3;
+                    delphi *= THIRD;
+                }
+                // Draw the orbit for object i
+                for (int j = 0; j < plotpoints; j++) {
+                    phi += delphi;
+                    float rr = (float) distanceFromFocus(c1[i], epsilon[i], phi);
+                    float xx = (float) (rr * Math.sin(phi));
+                    float yy = -(float) (rr * Math.cos(phi));  // Sign flipped
+                    canvas.drawLine(lastxx, lastyy, xx, yy, paint);
+                    lastxx = xx;
+                    lastyy = yy;
+                }
+                canvas.restore();
+            }
+        }
+    }
+
+    // Return distance from focus for elliptical orbit (in units of c1)
+    private double distanceFromFocus(double c1, double epsilon, double theta) {
+        return (c1 / (1 + epsilon * Math.cos(theta)));
+    }
+
+    // Stop the thread loop
+    public void stopLooper() {
+        mState = DONE;
+        isAnimating = false;
+    }
+
+    // Start the thread loop
+    public void startLooper() {
+        if (!isAnimating) {
+            String ts = "Long-press to toggle motion on/off";
+            Toast.makeText(this.getContext(), ts, Toast.LENGTH_LONG).show();
+        }
+    }
 
     @Override
     public boolean onLongClick(View v) {

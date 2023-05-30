@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">PlanetarySystem</string>
+    <string name="speed_decrease">speedDecrease</string>
+    <string name="speed_increase">speedIncrease</string>
+    <string name="zoom_out">zoomOut</string>
+    <string name="zoom_in">zoomIn</string>
+    <string name="toggle_labels">toggleLabels</string>
+    <string name="action_settings">actionSettings</string>
+    <string name="this_is_the_settings_screen">THIS IS THE SETTINGS SCREEN</string>
 </resources>
