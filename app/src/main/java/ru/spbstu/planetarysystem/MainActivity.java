@@ -3,8 +3,8 @@ package ru.spbstu.planetarysystem;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -18,6 +18,7 @@ import androidx.appcompat.widget.Toolbar;
 public class MainActivity extends AppCompatActivity {
 
     private static final double delayScaler = 1.2;
+    private int yearOrSo = 303 * 2;
     private static final double zoomScaler = 1.1;
     private static final int BACKGROUND_COLOR = Color.argb(255, 0, 0, 0);
     private KeplerRunner krunner;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
         /* In the following we lay out the screen entirely in code (activity_main.xml
          * isn't used).  We wish to lay out a stage for planetary motion using LinearLayout.
          * The instance krunner of KeplerRunner is added to a LinearLayout LL1 using addView.
@@ -47,15 +49,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Instantiate a Toolbar from its constructor and add properties to it
         toolbar = new Toolbar(this);
+        toolbar.setBackgroundColor(getResources().getColor(R.color.md_theme_light_primary, null));
 
-        // Set background color.  Handle method getColor deprecated as of API 23
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            toolbar.setBackgroundColor(getResources().getColor(R.color.md_theme_light_primary, null));
-        } else {
-            toolbar.setBackgroundColor(getResources().getColor(R.color.md_theme_light_primary));
-        }
-
-        toolbar.setNavigationIcon(R.drawable.solar_system_icon);
+        toolbar.setNavigationIcon(R.drawable.ic_app);
         toolbar.setTitle("");
 
         // Attach the toolbar to the view
@@ -109,14 +105,19 @@ public class MainActivity extends AppCompatActivity {
         Log.i("ANIM", "OptionItemsSelected");
         // Handle item selection
         int id = item.getItemId();
+        if (id == R.id.change_direction) {
+            krunner.changeDirection();
+            return true;
+        }
         // Run slower
         if (id == R.id.speed_decrease) {
             krunner.setDelay(delayScaler);
+            //krunner.addNsteps((int) (100 * delayScaler));
             return true;
             // Run faster
         } else if (id == R.id.speed_increase) {
             long test = krunner.setDelay(1 / delayScaler);
-
+            //krunner.subNsteps((int) (100 * delayScaler)); // if (krunner.getNsteps() <= 36) {
             // Method setDelay() returns -2 if new delay would be < 1
             if (test == -2) {
                 Toast.makeText(this, "Maximum speed. Can't increase",
@@ -132,6 +133,8 @@ public class MainActivity extends AppCompatActivity {
             //toggle labels
         } else if (id == R.id.toggle_labels) {
             krunner.showLabels = !krunner.showLabels;
+        } else if (id == R.id.timeJump) {
+            krunner.timeJump(yearOrSo);
         } else if (id == R.id.action_settings) {
             //
             Intent i = new Intent(this, MySettings.class);

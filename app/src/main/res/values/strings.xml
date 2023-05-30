@@ -7,4 +7,5 @@
     <string name="toggle_labels">toggleLabels</string>
     <string name="action_settings">actionSettings</string>
     <string name="this_is_the_settings_screen">THIS IS THE SETTINGS SCREEN</string>
+    <string name="time_jump">TimeJumpButton</string>
 </resources>

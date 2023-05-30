@@ -6,9 +6,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/solar_system_icon"
+        android:icon="@drawable/ic_app"
         android:label="@string/app_name"
-        android:roundIcon="@android:drawable/btn_star_big_on"
+        android:roundIcon="@android:drawable/ic_menu_mapmode"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:targetApi="31">
