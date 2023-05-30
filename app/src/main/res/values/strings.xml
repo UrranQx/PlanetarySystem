@@ -8,4 +8,14 @@
     <string name="action_settings">actionSettings</string>
     <string name="this_is_the_settings_screen">THIS IS THE SETTINGS SCREEN</string>
     <string name="time_jump">TimeJumpButton</string>
+    <string name="apply">Apply</string>
+    <string name="timejump_in_days">TimeJump in days</string>
+    <string name="save_new_body">Save new body</string>
+    <string name="semimajor_axis_in_au">Semimajor axis in AU</string>
+    <string name="rotation_in_degrees">Rotation in Degrees</string>
+    <string name="prograde_1_retrograde_1">Prograde 1 / Retrograde -1</string>
+    <string name="reset_all">Reset all</string>
+    <string name="initial_angle_in_rad">Initial angle in Rad</string>
+    <string name="celestial_body_name">Celestial Body Name</string>
+    <string name="eccentricity">Eccentricity</string>
 </resources>

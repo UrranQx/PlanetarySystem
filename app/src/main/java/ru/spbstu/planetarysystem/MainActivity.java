@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         // Stop animation loop if going into background
         krunner.stopLooper();
-        Log.i("ANIM", "onPause");
+        Log.d("ANIM", "onPause");
     }
 
     @Override
@@ -96,21 +96,28 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         // Resume animation loop
         krunner.startLooper();
-        Log.i("ANIM", "onResume");
+        Log.d("ANIM", "onResume");
+    }
+
+    @Override
+    public void onRestart() {
+        super.onRestart();
+        Log.d("ANIM", "onRestart");
     }
 
     // Process action bar menu items
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.i("ANIM", "OptionItemsSelected");
+        Log.d("ANIM", "OptionItemsSelected");
         // Handle item selection
         int id = item.getItemId();
+
         if (id == R.id.change_direction) {
             krunner.changeDirection();
             return true;
         }
         // Run slower
-        if (id == R.id.speed_decrease) {
+        else if (id == R.id.speed_decrease) {
             krunner.setDelay(delayScaler);
             //krunner.addNsteps((int) (100 * delayScaler));
             return true;

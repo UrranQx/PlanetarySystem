@@ -156,7 +156,7 @@ public class KeplerRunner extends View {
             theta[i] = -direction * theta0[i];
         }
 
-        // Define the planet as circular shape
+        // Let's define the planet as circular shape
         planet = new ShapeDrawable(new OvalShape());
         planet.getPaint().setColor(PLANET_COLOR);
         planet.setBounds(0, 0, 2 * planetRadius, 2 * planetRadius);
@@ -178,7 +178,7 @@ public class KeplerRunner extends View {
 
         // Make orbital radius a fraction of minimum of width and height of display and scale
         // by zoomFac.
-        pixelScale = zoomFac * fracWidth * Math.min(centerX, centerY) / a[4]; // a[4]?
+        pixelScale = zoomFac * fracWidth * Math.min(centerX, centerY) / a[4]; // a[4] - (4+1)planets
 
         // Set the initial position of the planet (translate by planetRadius so center of planet
         // is at this position)
@@ -247,7 +247,7 @@ public class KeplerRunner extends View {
 
     private void newXY() {
         for (int i = 0; i < numObjects; i++) {
-            c1[i] = pixelScale * a[i] * (1 - epsilon[i] * epsilon[i]);
+            //c1[i] = pixelScale * a[i] * (1 - epsilon[i] * epsilon[i]);
             c2[i] = 2 * Math.PI * Math.sqrt(1 - epsilon[i] * epsilon[i])
                     * dt * (pixelScale * a[i]) * (pixelScale * a[i]) / period[i];
             dTheta[i] = retroFac[i] * direction * c2[i] / R0[i] / R0[i];
@@ -285,7 +285,6 @@ public class KeplerRunner extends View {
             // (translations and rotations in this case) from affecting the drawing on the canvas
             // outside of the save() .. restore() blocks.  Note: for each save() there is
             // a matching restore().
-
             canvas.save();
             canvas.translate(centerX, centerY);
             canvas.rotate(orientDeg[i]);
@@ -293,6 +292,7 @@ public class KeplerRunner extends View {
             planet.setBounds(0, 0,
                     (int) (2 * planetRadius * zoomFac),
                     (int) (2 * planetRadius * zoomFac));
+            // BTW here we can change planet color, cuz we iterate here throughout all bodies
             planet.draw(canvas);
 
             // Rotate the canvas back before drawing label so it will be horizontal instead of
@@ -418,7 +418,8 @@ public class KeplerRunner extends View {
     public void subNsteps(int steps) {
         changeNsteps(nsteps - steps);
     }
-    public int getNsteps(){
+
+    public int getNsteps() {
         return nsteps;
     }
 
@@ -435,7 +436,7 @@ public class KeplerRunner extends View {
         }
         for (int i = 0; i < numObjects; i++) {
             dTheta[i] = timeScale * retroFac[i] * direction * c2[i] / R0[i] / R0[i];
-            theta[i] += dTheta[i]*timeInEarthDays;
+            theta[i] += dTheta[i] * timeInEarthDays;
             R0[i] = (float) distanceFromFocus(c1[i], epsilon[i], theta[i]);
             X[i] = (float) (R0[i] * Math.sin(theta[i])) + centerX - (int) (planetRadius * zoomFac);
             Y[i] = centerY - (float) (R0[i] * Math.cos(theta[i])) - (int) (planetRadius * zoomFac);
