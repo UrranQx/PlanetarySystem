@@ -17,17 +17,20 @@ import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -68,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         // Apply the settings to the app
         //applySettings(settingsData);
         File file = new File(getFilesDir(), "settings.json");
+
         try {
             if (!file.exists()) {
                 file.createNewFile();
@@ -84,9 +88,14 @@ public class MainActivity extends AppCompatActivity {
             isr.close();
             fis.close();
             String settingsJson = sb.toString();
-            CelestialBody settingsData = new Gson().fromJson(settingsJson, CelestialBody.class);
-            Log.e("ERROR", settingsData.toString() + " || " + newBodies);
-            newBodies.add(settingsData);
+            Type listType = new TypeToken<List<CelestialBody>>(){}.getType();
+            List<CelestialBody> repo = new Gson().fromJson(settingsJson, listType);
+            //CelestialBody settingsData = new Gson().fromJson(settingsJson, CelestialBody.class);
+
+            if (Objects.nonNull(repo)) {
+                Log.e("ERROR", repo.toString() + " || " + newBodies);
+                newBodies.addAll(repo);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -115,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         toolbar = new Toolbar(this);
         toolbar.setBackgroundColor(getResources().getColor(R.color.md_theme_light_primary, null));
 
-        toolbar.setNavigationIcon(R.drawable.ic_app);
+        //toolbar.setNavigationIcon(R.drawable.ic_app); //Don't need
         toolbar.setTitle("");
 
         // Attach the toolbar to the view
@@ -207,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
             //toggle labels
         } else if (id == R.id.toggle_labels) {
             krunner.showLabels = !krunner.showLabels;
-        } else if (id == R.id.timeJump) {
+        } else if (id == R.id.time_jump) {
             Log.i("SHARED PREFS", "Time Jump = " + timeJump + "* " + coeff);
             krunner.timeJump((int) (timeJump * coeff));
         } else if (id == R.id.action_settings) {

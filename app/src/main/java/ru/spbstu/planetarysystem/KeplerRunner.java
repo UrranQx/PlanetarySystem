@@ -55,7 +55,7 @@ public class KeplerRunner extends View {
 
     private static List<CelestialBody> celestialBodies = new ArrayList<>();
     private static int numObjects; /*= celestialBodies.size(); */         // Number of bodies to include ()
-
+    // INITIAL DATA
     private static List<String> celestialBodyNames = Arrays.asList(
             "Mercury", "Venus", "Earth", "Mars",
             "Jupiter", "Saturn", "Uranus", "Neptune",
@@ -227,20 +227,12 @@ public class KeplerRunner extends View {
 
                     // Update the X and Y coordinates for all planets
                     newXY();
-
-                    // The method Thread.sleep throws an InterruptedException if Thread.interrupt()
-                    // were to be issued while thread is sleeping; the exception must be caught.
                     try {
                         // Control speed of update (but precision of delay not guaranteed)
                         Thread.sleep(delay);
                     } catch (InterruptedException e) {
                         Log.e("ERROR", "Thread Interruption");
                     }
-
-                    // Update the animation by invalidating the view to force a redraw.
-                    // We cannot update views on the main UI directly from this thread, so we use
-                    // handler to do it.
-
                     handler.post(new Runnable() {
                         public void run() {
                             // Each time through the animation loop,  invalidate the main UI
