@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Convert the JSON string to a SettingsData object
         Gson gson = new Gson();
-        SettingsData settingsData = gson.fromJson(json, SettingsData.class);
+        CelestialBody celestialBody = gson.fromJson(json, CelestialBody.class);
 
         // Apply the settings to the app
         //applySettings(settingsData);

@@ -3,29 +3,29 @@ package ru.spbstu.planetarysystem;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 import com.google.gson.Gson;
 
 public class MySettings extends AppCompatActivity {
     private static final String TAG = "SettingsActivity";
+    private String celestialBodyName;
+    private double eccentricity;
+    private double semimajorAxis;
+    private double period;
+    private float orbitRotation;
+    private double initialAngeInRad;
+    private double direction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +36,8 @@ public class MySettings extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 EditText textView = findViewById(R.id.etxt_time_jump);
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(textView.getWindowToken(), 0);
                 int timeJump = Integer.parseInt(textView.getText().toString());
                 Log.i("SHARED PREFS", " +" + timeJump);
                 SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
@@ -64,6 +66,42 @@ public class MySettings extends AppCompatActivity {
                 editor.apply();
                 Toast.makeText(getApplicationContext(), "All your data removed", Toast.LENGTH_SHORT).show();
                 Log.w("RESET BUTTON", "Now your data is" + sharedPreferences.getAll());
+                // WE've resetted timeJump variable
+                // But what about orbit constructs?
+            }
+        });
+        Button saveNewBody = findViewById(R.id.button_save_body);
+        saveNewBody.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // First we need to check whether a body have a Not Empty Name
+                // 0=<Ecc<1 if not -> ecc = 0
+                // AU <10^5 Just joking
+                // direction = 1 | -1 if not -> direction = 1;
+                EditText etxtCelestialBodyName = findViewById(R.id.etxt_celestial_body_name);
+                EditText etxtEccentricity = findViewById(R.id.etxt_eccentricity);
+                EditText etxtSemimajorAxis = findViewById(R.id.etxt_semimajor_axis);
+                EditText etxtOrbitRotation = findViewById(R.id.etxt_orient_deg);
+                EditText etxtInitialAngleRad = findViewById(R.id.etxt_theta_0);
+                EditText etxtDirection = findViewById(R.id.etxt_retro_fac);
+                celestialBodyName = etxtCelestialBodyName.getText().toString();
+                eccentricity = Double.parseDouble(etxtEccentricity.getText().toString());
+                semimajorAxis = Double.parseDouble(etxtSemimajorAxis.getText().toString());
+                orbitRotation = Float.parseFloat(etxtOrbitRotation.getText().toString());
+                initialAngeInRad = Double.parseDouble(etxtInitialAngleRad.getText().toString());
+                direction = Double.parseDouble(etxtDirection.getText().toString());
+                if (celestialBodyName.trim().length() == 0) {
+                    Toast.makeText(
+                                    getApplicationContext(),
+                                    "Celestial Body Name is empty",
+                                    Toast.LENGTH_SHORT)
+                            .show();
+                }
+                if (eccentricity < 0 || eccentricity >= 1) eccentricity = 0;
+                if (semimajorAxis > Math.pow(10, 5)) semimajorAxis = 10 + semimajorAxis % 10;
+                direction = direction >= 0d ? 1d : -1d;
+                period = Math.pow(semimajorAxis, 3f / 2f);
+                saveSettings();
             }
         });
 
@@ -76,11 +114,18 @@ public class MySettings extends AppCompatActivity {
     }
 
     private void saveSettings() {
-        SettingsData settingsData = new SettingsData();
-        settingsData.setSetting1("value1");
-        settingsData.setSetting2(123);
+        CelestialBody celestialBody = new CelestialBody(
+                celestialBodyName,
+                eccentricity,
+                semimajorAxis,
+                period,
+                initialAngeInRad,
+                orbitRotation,
+                direction
+
+        );
         // Convert the settings data to JSON format
-        String settingsJson = new Gson().toJson(settingsData);
+        String settingsJson = new Gson().toJson(celestialBody);
         try {
             FileOutputStream fos = openFileOutput("settings.json", Context.MODE_PRIVATE);
             fos.write(settingsJson.getBytes());

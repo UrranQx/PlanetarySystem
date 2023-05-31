@@ -11,6 +11,9 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class KeplerRunner extends View {
     private static final String TAG = "ANIM";         // Diagnostic label
 
@@ -47,6 +50,20 @@ public class KeplerRunner extends View {
       The period and semimajor axis length are not independent, being related by Kepler's 3rd
       law T = a^{3/2} in these units.  Let's include them as separate static final arrays for
       computational efficiency. */
+      private static List<CelestialBody> celestialBodies = Arrays.asList(
+              new CelestialBody("Mercury", 0.387, 0.206, 0.241, 5.1, 0f, 1.0),
+              new CelestialBody("Venus", 0.723, 0.007, 0.615, 1.4, 0.0f, 1.0),
+              new CelestialBody("Earth", 1.0, 0.017, 1.0, 1.2, 0f, 1.0),
+              new CelestialBody("Mars", 1.524, 0.093, 1.881, 1.6, 100f, 1.0),
+              new CelestialBody("Jupiter", 5.203, 0.048, 11.86, 1.2, 0f, 1.0),
+              new CelestialBody("Saturn", 9.54, 0.056, 29.46, 4.4, 0f, 1.0),
+              new CelestialBody("Uranus", 19.18, 0.047, 84.01, 1.2, 0f, 1.0),
+              new CelestialBody("Neptune", 30.06, 0.009, 164.8, 2.0, 0f, 1.0),
+              new CelestialBody("Pluto", 39.53, 0.248, 248.5, 5.6, 200f, 1.0),
+              new CelestialBody("2008 VB4", 2.35, 0.617, 3.61, 3.1, 70f, 1.0),
+              new CelestialBody("2009 FG", 1.97, 0.529, 2.76, 3.1, -45f, 1.0),
+              new CelestialBody("Halley", 17.83, 0.967, 75.32, 3.1, 115f, -1.0)
+      );
 
     private static final String[] celestialBodyName = {
             "Mercury", "Venus", "Earth", "Mars",
