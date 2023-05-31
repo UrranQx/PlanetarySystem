@@ -2,8 +2,8 @@ package ru.spbstu.planetarysystem;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -16,20 +16,20 @@ import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.Gson;
 
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final double delayScaler = 1.2;
-    private int yearOrSo = 303 * 2;
+    private static int yearOrSo = 365;
+    private static double coeff = 1.6602739726027398; // yearOrSo(606)/365 -> intDay * coeff = day
     private static final double zoomScaler = 1.1;
     private static final int BACKGROUND_COLOR = Color.argb(255, 0, 0, 0);
     private KeplerRunner krunner;
+    private SharedPreferences sharedPreferences;
+    private int timeJump;
     Toolbar toolbar;
     LinearLayout LL1;
     private static final String TAG = "MainActivity";
@@ -41,17 +41,33 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
 
-        // Load the settings data from the JSON file
-        JSONObject settingsJson = loadJsonFromFile(this, "settings.json");
-        if (settingsJson != null) {
-            try {
-                String setting1Value = settingsJson.getString("setting1");
-                String setting2Value = settingsJson.getString("setting2");
-                // Apply the settings as needed
-            } catch (JSONException e) {
-                Log.e(TAG, "Error parsing JSON object", e);
+        // Load the JSON string from the settings file in internal storage
+        String filename = "settings.json";
+        FileInputStream inputStream;
+        String json = "";
+        try {
+            inputStream = openFileInput(filename);
+            int c;
+            while ((c = inputStream.read()) != -1) {
+                json += Character.toString((char) c);
             }
+            inputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        // Convert the JSON string to a SettingsData object
+        Gson gson = new Gson();
+        SettingsData settingsData = gson.fromJson(json, SettingsData.class);
+
+        // Apply the settings to the app
+        //applySettings(settingsData);
+
+        sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+
+        // Get the int value
+        timeJump = sharedPreferences.getInt("timeJump", yearOrSo);
+
         /* In the following we lay out the screen entirely in code (activity_main.xml
          * isn't used).  We wish to lay out a stage for planetary motion using LinearLayout.
          * The instance krunner of KeplerRunner is added to a LinearLayout LL1 using addView.
@@ -109,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         // Stop animation loop if going into background
         krunner.stopLooper();
-        Log.d("ANIM", "onPause");
     }
 
     @Override
@@ -118,12 +133,16 @@ public class MainActivity extends AppCompatActivity {
         // Resume animation loop
         krunner.startLooper();
         Log.d("ANIM", "onResume");
+
     }
 
     @Override
     public void onRestart() {
         super.onRestart();
         Log.d("ANIM", "onRestart");
+        sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        // Get the int value
+        timeJump = sharedPreferences.getInt("timeJump", yearOrSo);
     }
 
     // Process action bar menu items
@@ -162,7 +181,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.toggle_labels) {
             krunner.showLabels = !krunner.showLabels;
         } else if (id == R.id.timeJump) {
-            krunner.timeJump(yearOrSo);
+            Log.i("SHARED PREFS","Time Jump = "+ timeJump + "* " + coeff);
+            krunner.timeJump((int) (timeJump*coeff));
         } else if (id == R.id.action_settings) {
             //
             Intent i = new Intent(this, MySettings.class);
@@ -171,21 +191,5 @@ public class MainActivity extends AppCompatActivity {
         } else return super.onOptionsItemSelected(item);
         Log.w("MAIN ACTIVITY", "All if-elses are missed");
         return true;
-    }
-
-    private JSONObject loadJsonFromFile(Context context, String fileName) {
-        FileInputStream inputStream;
-        try {
-            inputStream = context.openFileInput(fileName);
-            int size = inputStream.available();
-            byte[] buffer = new byte[size];
-            inputStream.read(buffer);
-            inputStream.close();
-            String json = new String(buffer, StandardCharsets.UTF_8);
-            return new JSONObject(json);
-        } catch (IOException | JSONException e) {
-            Log.e(TAG, "Error loading JSON file", e);
-        }
-        return null;
     }
 }
