@@ -12,23 +12,23 @@ public class CelestialBody {
     /**
      * CelestialBody("Mercury", 0.387, 0.206, 0.241, 5.1, 0f, 1.0),
      * @param celestialBodyName
-     * @param e
-     * @param a
-     * @param p
-     * @param theta_0
+     * @param semiMajorAxis
+     * @param eccentricity
+     * @param period
+     * @param initialRotationInRad
      * @param orbitRotation
      * @param direction
      */
     public CelestialBody(
-            String celestialBodyName, double e, double a,
-            double p, double theta_0, float orbitRotation, double direction
+            String celestialBodyName, double semiMajorAxis, double eccentricity,
+            double period, double initialRotationInRad, float orbitRotation, double direction
     ) {
         this.celestialBodyName = celestialBodyName;
-        this.eccentricity = e;
-        this.semimajorAxis = a;
-        this.period = p;
+        this.eccentricity = eccentricity;
+        this.semimajorAxis = semiMajorAxis;
+        this.period = period;
         this.orbitRotation = orbitRotation;
-        this.initialAngeInRad = theta_0;
+        this.initialAngeInRad = initialRotationInRad;
         this.direction = direction;
     }
 
@@ -86,5 +86,18 @@ public class CelestialBody {
 
     public void setPeriod(double period) {
         this.period = period;
+    }
+
+    @Override
+    public String toString() {
+        return "CelestialBody{" +
+                "celestialBodyName='" + celestialBodyName + '\'' +
+                ", eccentricity=" + eccentricity +
+                ", semimajorAxis=" + semimajorAxis +
+                ", period=" + period +
+                ", orbitRotation=" + orbitRotation +
+                ", initialAngeInRad=" + initialAngeInRad +
+                ", direction=" + direction +
+                '}';
     }
 }

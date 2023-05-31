@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -116,20 +117,27 @@ public class MySettings extends AppCompatActivity {
     private void saveSettings() {
         CelestialBody celestialBody = new CelestialBody(
                 celestialBodyName,
-                eccentricity,
                 semimajorAxis,
+                eccentricity,
                 period,
                 initialAngeInRad,
                 orbitRotation,
                 direction
 
         );
-        // Convert the settings data to JSON format
+        File file = new File(getFilesDir(), "settings.json");
         String settingsJson = new Gson().toJson(celestialBody);
         try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            // Convert the settings data to JSON format
+
             FileOutputStream fos = openFileOutput("settings.json", Context.MODE_PRIVATE);
             fos.write(settingsJson.getBytes());
             fos.close();
+            Log.i("JSON", "File writer done");
         } catch (IOException e) {
             e.printStackTrace();
         }

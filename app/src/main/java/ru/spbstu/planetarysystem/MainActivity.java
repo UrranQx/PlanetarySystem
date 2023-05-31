@@ -18,7 +18,16 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.google.gson.Gson;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +36,21 @@ public class MainActivity extends AppCompatActivity {
     private static double coeff = 1.6602739726027398; // yearOrSo(606)/365 -> intDay * coeff = day
     private static final double zoomScaler = 1.1;
     private static final int BACKGROUND_COLOR = Color.argb(255, 0, 0, 0);
+    private static List<CelestialBody> celestialBodiesDefault = Arrays.asList(
+            new CelestialBody("Mercury", 0.387, 0.206, 0.241, 5.1, 0f, 1.0),
+            new CelestialBody("Venus", 0.723, 0.007, 0.615, 1.4, 0.0f, 1.0),
+            new CelestialBody("Earth", 1.0, 0.017, 1.0, 1.2, 0f, 1.0),
+            new CelestialBody("Mars", 1.524, 0.093, 1.881, 1.6, 100f, 1.0),
+            new CelestialBody("Jupiter", 5.203, 0.048, 11.86, 1.2, 0f, 1.0),
+            new CelestialBody("Saturn", 9.54, 0.056, 29.46, 4.4, 0f, 1.0),
+            new CelestialBody("Uranus", 19.18, 0.047, 84.01, 1.2, 0f, 1.0),
+            new CelestialBody("Neptune", 30.06, 0.009, 164.8, 2.0, 0f, 1.0),
+            new CelestialBody("Pluto", 39.53, 0.248, 248.5, 5.6, 200f, 1.0),
+            new CelestialBody("2008 VB4", 2.35, 0.617, 3.61, 3.1, 70f, 1.0),
+            new CelestialBody("2009 FG", 1.97, 0.529, 2.76, 3.1, -45f, 1.0),
+            new CelestialBody("Halley", 17.83, 0.967, 75.32, 3.1, 115f, -1.0)
+    );
+    private static LinkedList<CelestialBody> newBodies = new LinkedList<>();
     private KeplerRunner krunner;
     private SharedPreferences sharedPreferences;
     private int timeJump;
@@ -36,33 +60,36 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
+        newBodies.addAll(celestialBodiesDefault);
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
-
-        // Load the JSON string from the settings file in internal storage
-        String filename = "settings.json";
-        FileInputStream inputStream;
-        String json = "";
-        try {
-            inputStream = openFileInput(filename);
-            int c;
-            while ((c = inputStream.read()) != -1) {
-                json += Character.toString((char) c);
-            }
-            inputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Convert the JSON string to a SettingsData object
-        Gson gson = new Gson();
-        CelestialBody celestialBody = gson.fromJson(json, CelestialBody.class);
-
+        // Get the path to the internal storage directory
         // Apply the settings to the app
         //applySettings(settingsData);
-
+        File file = new File(getFilesDir(), "settings.json");
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileInputStream fis = openFileInput("settings.json");
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            br.close();
+            isr.close();
+            fis.close();
+            String settingsJson = sb.toString();
+            CelestialBody settingsData = new Gson().fromJson(settingsJson, CelestialBody.class);
+            Log.e("ERROR", settingsData.toString() + " || " + newBodies);
+            newBodies.add(settingsData);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
 
         // Get the int value
@@ -100,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
         // Instantiate the class MotionRunner to define the entry screen display and add it
         // to the view.
 
-        krunner = new KeplerRunner(this);
+        krunner = new KeplerRunner(this, newBodies);
         krunner.setLayoutParams(lp);
         krunner.setBackgroundColor(BACKGROUND_COLOR);
         LL1.addView(krunner);
@@ -181,8 +208,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.toggle_labels) {
             krunner.showLabels = !krunner.showLabels;
         } else if (id == R.id.timeJump) {
-            Log.i("SHARED PREFS","Time Jump = "+ timeJump + "* " + coeff);
-            krunner.timeJump((int) (timeJump*coeff));
+            Log.i("SHARED PREFS", "Time Jump = " + timeJump + "* " + coeff);
+            krunner.timeJump((int) (timeJump * coeff));
         } else if (id == R.id.action_settings) {
             //
             Intent i = new Intent(this, MySettings.class);

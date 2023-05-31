@@ -93,7 +93,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:hint="@string/rotation_in_degrees"
-                android:inputType="numberSigned"
+                android:inputType="numberDecimal"
                 android:textSize="16sp"
                 tools:ignore="TouchTargetSizeCheck" />
 
@@ -120,7 +120,7 @@
                 android:layout_weight="1"
                 android:hint="@string/prograde_1_retrograde_1"
                 android:imeOptions="actionDone"
-                android:inputType="numberSigned"
+                android:inputType="numberDecimal"
                 android:textSize="16sp"
                 tools:ignore="TouchTargetSizeCheck" />
 

@@ -11,8 +11,11 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class KeplerRunner extends View {
     private static final String TAG = "ANIM";         // Diagnostic label
@@ -37,68 +40,55 @@ public class KeplerRunner extends View {
     private static final float Y0 = 0;                 // y offset from center (pixels)
     private static double direction = -1;        // Orbit direction: counter-clockwise -1; clockwise +1
     private static final double fracWidth = 0.95;      // Fraction of screen width to use for display
-    private static final int numObjects = 12;          // Number of bodies to include (max = 12)
 
-      /* Data for 8 planets, dwarf planet Pluto, 2 Apollo (Earth-crossing) asteroids,  and Halley's
-      Comet.The semimajor elliptical axis a is in astronomical units (AU),  eccentricity epsilon is
-      dimensionless,  period is in years, and theta0 (initial angle) is in radians, with
-      clockwise positive and measured from the 12-o'clock position.  orientDeg[] is the relative
-      orientation of the ellipse in degrees.  The variable retroFac controls whether the motion is
-      prograde (+1) or retrograde (-1). The relative orientations of the ellipses were eyeballed
-      from a plot, so are only approximately correct.  Likewise, the initial orientation angles theta0
-      were eyeballed from plots.
-      The period and semimajor axis length are not independent, being related by Kepler's 3rd
-      law T = a^{3/2} in these units.  Let's include them as separate static final arrays for
-      computational efficiency. */
-      private static List<CelestialBody> celestialBodies = Arrays.asList(
-              new CelestialBody("Mercury", 0.387, 0.206, 0.241, 5.1, 0f, 1.0),
-              new CelestialBody("Venus", 0.723, 0.007, 0.615, 1.4, 0.0f, 1.0),
-              new CelestialBody("Earth", 1.0, 0.017, 1.0, 1.2, 0f, 1.0),
-              new CelestialBody("Mars", 1.524, 0.093, 1.881, 1.6, 100f, 1.0),
-              new CelestialBody("Jupiter", 5.203, 0.048, 11.86, 1.2, 0f, 1.0),
-              new CelestialBody("Saturn", 9.54, 0.056, 29.46, 4.4, 0f, 1.0),
-              new CelestialBody("Uranus", 19.18, 0.047, 84.01, 1.2, 0f, 1.0),
-              new CelestialBody("Neptune", 30.06, 0.009, 164.8, 2.0, 0f, 1.0),
-              new CelestialBody("Pluto", 39.53, 0.248, 248.5, 5.6, 200f, 1.0),
-              new CelestialBody("2008 VB4", 2.35, 0.617, 3.61, 3.1, 70f, 1.0),
-              new CelestialBody("2009 FG", 1.97, 0.529, 2.76, 3.1, -45f, 1.0),
-              new CelestialBody("Halley", 17.83, 0.967, 75.32, 3.1, 115f, -1.0)
-      );
+    /* Data for 8 planets, dwarf planet Pluto, 2 Apollo (Earth-crossing) asteroids,  and Halley's
+    Comet.The semimajor elliptical axis a is in astronomical units (AU),  eccentricity epsilon is
+    dimensionless,  period is in years, and theta0 (initial angle) is in radians, with
+    clockwise positive and measured from the 12-o'clock position.  orientDeg[] is the relative
+    orientation of the ellipse in degrees.  The variable retroFac controls whether the motion is
+    prograde (+1) or retrograde (-1). The relative orientations of the ellipses were eyeballed
+    from a plot, so are only approximately correct.  Likewise, the initial orientation angles theta0
+    were eyeballed from plots.
+    The period and semimajor axis length are not independent, being related by Kepler's 3rd
+    law T = a^{3/2} in these units.  Let's include them as separate static final arrays for
+    computational efficiency. */
 
-    private static final String[] celestialBodyName = {
+    private static List<CelestialBody> celestialBodies = new ArrayList<>();
+    private static int numObjects; /*= celestialBodies.size(); */         // Number of bodies to include ()
+
+    private static List<String> celestialBodyNames = Arrays.asList(
             "Mercury", "Venus", "Earth", "Mars",
             "Jupiter", "Saturn", "Uranus", "Neptune",
             "Pluto", "2008 VB4", "2009 FG", "Halley"
-    };
-    private static final double[] epsilon = {
+    );
+    private static List<Double> epsilon = Arrays.asList(
             0.206, 0.007, 0.017, 0.093,
             0.048, 0.056, 0.047, 0.009,
             0.248, 0.617, 0.529, 0.967
-    };
-    protected static final double[] a = {
+    );
+    protected static List<Double> a = Arrays.asList(
             0.387, 0.723, 1.0, 1.524,
             5.203, 9.54, 19.18, 30.06,
-            39.53, 2.35, 1.97, 17.83};
-    private static final double[] period = { // Precalculated from Kepler's 3rd law T = a^{3/2}
+            39.53, 2.35, 1.97, 17.83
+    );
+    private static List<Double> period = Arrays.asList( // Precalculated from Kepler's 3rd law T = a^{3/2}
             0.241, 0.615, 1.0, 1.881,
             11.86, 29.46, 84.01, 164.8,
             248.5, 3.61, 2.76, 75.32
-    };
-    private static final double[] theta0 = {
+    );
+    private static List<Double> theta0 = Arrays.asList(
             5.1, 1.4, 1.2, 1.6,
             1.2, 4.4, 1.2, 2.0,
             5.6, 3.1, 3.1, 3.1
-    };
-    private static final float[] orientDeg = {
+    );
+    private static List<Float> orientDeg = Arrays.asList(
             0f, 0.0f, 0f, 100f,
             0f, 0f, 0f, 0f,
-            200f, 70f, -45f, 115f
-    };
-    private static final double[] retroFac = {
-            1, 1, 1, 1,
-            1, 1, 1, 1,
-            1, 1, 1, -1
-    };  // +1 prograde; -1 retrograde
+            200f, 70f, -45f, 115f);
+    private static List<Double> retroFac = Arrays.asList(
+            1d, 1d, 1d, 1d,
+            1d, 1d, 1d, 1d,
+            1d, 1d, 1d, -1d);// +1 prograde; -1 retrograde
 
     private Paint paint;                       // Paint object controlling format of screen draws
     private ShapeDrawable planet;              // Planet symbol
@@ -130,8 +120,11 @@ public class KeplerRunner extends View {
 
     private Handler handler = new Handler();
 
-    public KeplerRunner(Context context) {
+    public KeplerRunner(Context context, List<CelestialBody> cbs) {
         super(context);
+        celestialBodies.addAll(cbs);
+        updateData();
+        numObjects = celestialBodies.size();
 
         X = new float[numObjects];
         Y = new float[numObjects];
@@ -141,6 +134,7 @@ public class KeplerRunner extends View {
         c1 = new double[numObjects];
         c2 = new double[numObjects];
         dt = 1 / (double) nsteps;
+
         // Add click and long click listeners
         View view = getRootView();
         view.setOnClickListener(new OnClickListener() {
@@ -170,7 +164,7 @@ public class KeplerRunner extends View {
         });
 
         for (int i = 0; i < numObjects; i++) {
-            theta[i] = -direction * theta0[i];
+            theta[i] = -direction * theta0.get(i);
         }
 
         // Let's define the planet as circular shape
@@ -195,16 +189,16 @@ public class KeplerRunner extends View {
 
         // Make orbital radius a fraction of minimum of width and height of display and scale
         // by zoomFac.
-        pixelScale = zoomFac * fracWidth * Math.min(centerX, centerY) / a[4]; // a[4] - (4+1)planets
+        pixelScale = zoomFac * fracWidth * Math.min(centerX, centerY) / a.get(4); // a[4] - (4+1)planets
 
         // Set the initial position of the planet (translate by planetRadius so center of planet
         // is at this position)
         for (int i = 0; i < numObjects; i++) {
             // Compute scales c1[] and c2[] carrying distance units in pixels
-            c1[i] = pixelScale * a[i] * (1 - epsilon[i] * epsilon[i]);
-            c2[i] = 2 * Math.PI * Math.sqrt(1 - epsilon[i] * epsilon[i])
-                    * dt * (pixelScale * a[i]) * (pixelScale * a[i]) / period[i];
-            R0[i] = (float) distanceFromFocus(c1[i], epsilon[i], theta[i]);
+            c1[i] = pixelScale * a.get(i) * (1 - epsilon.get(i) * epsilon.get(i));
+            c2[i] = 2 * Math.PI * Math.sqrt(1 - epsilon.get(i) * epsilon.get(i))
+                    * dt * (pixelScale * a.get(i)) * (pixelScale * a.get(i)) / period.get(i);
+            R0[i] = (float) distanceFromFocus(c1[i], epsilon.get(i), theta[i]);
             // The change in theta consistent with Kepler's 2nd law (equal areas in equal time)
             dTheta[i] = direction * c2[i] / R0[i] / R0[i];
             // New values of X and Y for planet
@@ -265,11 +259,11 @@ public class KeplerRunner extends View {
     private void newXY() {
         for (int i = 0; i < numObjects; i++) {
             //c1[i] = pixelScale * a[i] * (1 - epsilon[i] * epsilon[i]);
-            c2[i] = 2 * Math.PI * Math.sqrt(1 - epsilon[i] * epsilon[i])
-                    * dt * (pixelScale * a[i]) * (pixelScale * a[i]) / period[i];
-            dTheta[i] = retroFac[i] * direction * c2[i] / R0[i] / R0[i];
+            c2[i] = 2 * Math.PI * Math.sqrt(1 - epsilon.get(i) * epsilon.get(i))
+                    * dt * (pixelScale * a.get(i)) * (pixelScale * a.get(i)) / period.get(i);
+            dTheta[i] = retroFac.get(i) * direction * c2[i] / R0[i] / R0[i];
             theta[i] += dTheta[i];
-            R0[i] = (float) distanceFromFocus(c1[i], epsilon[i], theta[i]);
+            R0[i] = (float) distanceFromFocus(c1[i], epsilon.get(i), theta[i]);
             X[i] = (float) (R0[i] * Math.sin(theta[i])) + centerX - (int) (planetRadius * zoomFac);
             Y[i] = centerY - (float) (R0[i] * Math.cos(theta[i])) - (int) (planetRadius * zoomFac);
         }
@@ -304,7 +298,7 @@ public class KeplerRunner extends View {
             // a matching restore().
             canvas.save();
             canvas.translate(centerX, centerY);
-            canvas.rotate(orientDeg[i]);
+            canvas.rotate(orientDeg.get(i));
             canvas.translate(X[i] - centerX, Y[i] - centerY);
             planet.setBounds(0, 0,
                     (int) (2 * planetRadius * zoomFac),
@@ -317,8 +311,8 @@ public class KeplerRunner extends View {
             // the outer one, so this inverse rotation affects only the orientation of the label.
 
             canvas.save();
-            canvas.rotate(-orientDeg[i]);
-            if (showLabels) canvas.drawText(celestialBodyName[i], 10, 0, paint);
+            canvas.rotate(-orientDeg.get(i));
+            if (showLabels) canvas.drawText(celestialBodyNames.get(i), 10, 0, paint);
             canvas.restore();
             canvas.restore();
         }
@@ -343,24 +337,24 @@ public class KeplerRunner extends View {
 
                 // Starting points to draw orbit.  Note that the sign of the y coordinate is flipped
                 float lastxx = 0;
-                float lastyy = -(float) (distanceFromFocus(c1[i], epsilon[i], phi) * Math.cos(phi));
+                float lastyy = -(float) (distanceFromFocus(c1[i], epsilon.get(i), phi) * Math.cos(phi));
 
                 canvas.save();
                 canvas.translate(centerX, centerY);
-                canvas.rotate(orientDeg[i]);
+                canvas.rotate(orientDeg.get(i));
                 phi = 0;
 
                 // Increase density of plot points for very elliptical orbits to resolve their shapes
                 int plotpoints = numpoints;
                 double delphi = dphi;
-                if (epsilon[i] > 0.7) { // This can be done by another calculations
+                if (epsilon.get(i) > 0.7) { // This can be done by another calculations
                     plotpoints *= 3;
                     delphi *= THIRD;
                 }
                 // Draw the orbit for object i
                 for (int j = 0; j < plotpoints; j++) {
                     phi += delphi;
-                    float rr = (float) distanceFromFocus(c1[i], epsilon[i], phi);
+                    float rr = (float) distanceFromFocus(c1[i], epsilon.get(i), phi);
                     float xx = (float) (rr * Math.sin(phi));
                     float yy = -(float) (rr * Math.cos(phi));  // Sign flipped
                     canvas.drawLine(lastxx, lastyy, xx, yy, paint);
@@ -395,14 +389,14 @@ public class KeplerRunner extends View {
     void setZoom(double scale) {
         Log.i("SET ZOOM", " zoomFac = " + zoomFac * scale +
                 "  Scale = " + scale +
-                "  Pixel Scale = " + zoomFac * fracWidth * Math.min(centerX, centerY) / a[4]);
+                "  Pixel Scale = " + zoomFac * fracWidth * Math.min(centerX, centerY) / a.get(4));
         if (!isAnimating) return;
         zoomFac *= scale;
-        pixelScale = zoomFac * fracWidth * Math.min(centerX, centerY) / a[4];
+        pixelScale = zoomFac * fracWidth * Math.min(centerX, centerY) / a.get(4);
         for (int i = 0; i < numObjects; i++) {
-            c1[i] = pixelScale * a[i] * (1 - epsilon[i] * epsilon[i]);
-            c2[i] = 2 * Math.PI * Math.sqrt(1 - epsilon[i] * epsilon[i])// direction *
-                    * dt * (pixelScale * a[i]) * (pixelScale * a[i]) / period[i];
+            c1[i] = pixelScale * a.get(i) * (1 - epsilon.get(i) * epsilon.get(i));
+            c2[i] = 2 * Math.PI * Math.sqrt(1 - epsilon.get(i) * epsilon.get(i))// direction *
+                    * dt * (pixelScale * a.get(i)) * (pixelScale * a.get(i)) / period.get(i);
         }
     }
 
@@ -452,11 +446,65 @@ public class KeplerRunner extends View {
             return;
         }
         for (int i = 0; i < numObjects; i++) {
-            dTheta[i] = timeScale * retroFac[i] * direction * c2[i] / R0[i] / R0[i];
+            dTheta[i] = timeScale * retroFac.get(i) * direction * c2[i] / R0[i] / R0[i];
             theta[i] += dTheta[i] * timeInEarthDays;
-            R0[i] = (float) distanceFromFocus(c1[i], epsilon[i], theta[i]);
+            R0[i] = (float) distanceFromFocus(c1[i], epsilon.get(i), theta[i]);
             X[i] = (float) (R0[i] * Math.sin(theta[i])) + centerX - (int) (planetRadius * zoomFac);
             Y[i] = centerY - (float) (R0[i] * Math.cos(theta[i])) - (int) (planetRadius * zoomFac);
         }
+    }
+
+    private void updateData() {
+        stopLooper();
+        updateAxis();
+        updateDirection();
+        updateEcc();
+        updatePeriod();
+        updateInitialAngle();
+        updateNames();
+        updateOrientDeg();
+        updateDirection();
+    }
+
+    private void updateNames() {
+        celestialBodyNames = celestialBodies.stream()
+                .map(CelestialBody::getCelestialBodyName)
+                .collect(Collectors.toList());
+    }
+
+    private void updateAxis() {
+        a = celestialBodies.stream()
+                .map(CelestialBody::getSemimajorAxis)
+                .collect(Collectors.toList());
+    }
+
+    private void updatePeriod() {
+        period = celestialBodies.stream()
+                .map(CelestialBody::getPeriod)
+                .collect(Collectors.toList());
+    }
+
+    private void updateEcc() {
+        epsilon = celestialBodies.stream()
+                .map(CelestialBody::getEccentricity)
+                .collect(Collectors.toList());
+    }
+
+    private void updateOrientDeg() {
+        orientDeg = celestialBodies.stream()
+                .map(CelestialBody::getOrbitRotation)
+                .collect(Collectors.toList());
+    }
+
+    private void updateInitialAngle() {
+        theta0 = celestialBodies.stream()
+                .map(CelestialBody::getInitialAngeInRad)
+                .collect(Collectors.toList());
+    }
+
+    private void updateDirection() {
+        retroFac = celestialBodies.stream()
+                .map(CelestialBody::getDirection)
+                .collect(Collectors.toList());
     }
 }
